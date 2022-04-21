@@ -8,13 +8,18 @@ import android.location.LocationManager
 import android.location.LocationListener
 import android.location.Location
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.preference.PreferenceManager
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.ItemizedIconOverlay
@@ -22,6 +27,9 @@ import org.osmdroid.views.overlay.OverlayItem
 
 class MainActivity : AppCompatActivity(), LocationListener {
     var currentLocation: OverlayItem? = null
+    var newRestaurant: OverlayItem? = null
+    var lat = 0.0
+    var lon = 0.0
     lateinit var items: ItemizedIconOverlay<OverlayItem>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +66,44 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
         requestLocation()
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId) {
+            R.id.addRestaurant -> {
+                val intent = Intent(this,saveRestaurantActivity::class.java)
+                addRestaurantLauncher.launch(intent)
+                return true
+            }
+            R.id.mapActivity -> {
+                val intent = Intent(this,MainActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+        }
+        return false
+    }
+
+    val addRestaurantLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == RESULT_OK) {
+                it.data?.apply {
+                    val name = this.getStringExtra("com.example.name")
+                    val address = this.getStringExtra("com.example.address")
+                    val cuisine = this.getStringExtra("com.example.cuisine")
+                    val rating = this.getDoubleExtra("com.example.rating", 0.0)
+
+                    newRestaurant = OverlayItem("Current Location", name, GeoPoint(lat, lon))
+                    items.addItem(newRestaurant)
+                }
+            }
+        }
+
+
 
     fun requestLocation() {
 
@@ -106,10 +152,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
         val map1 = findViewById<MapView>(R.id.map1)
         map1.controller.setZoom(16.0)
         map1.controller.setCenter(GeoPoint(newLoc.latitude, newLoc.longitude))
+        lat = newLoc.latitude
+        lon = newLoc.longitude
 
-        items.removeItem(currentLocation)
+        /*items.removeItem(currentLocation)
         currentLocation = OverlayItem("Current Location", "Your Current Location", GeoPoint(newLoc.latitude, newLoc.longitude))
-        items.addItem(currentLocation)
+        items.addItem(currentLocation)*/
     }
 
     override fun onProviderDisabled(provider: String) {
