@@ -18,6 +18,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -26,19 +30,29 @@ import org.osmdroid.views.overlay.ItemizedIconOverlay
 import org.osmdroid.views.overlay.OverlayItem
 
 class MainActivity : AppCompatActivity(), LocationListener {
-    var currentLocation: OverlayItem? = null
     var newRestaurant: OverlayItem? = null
     var lat = 0.0
     var lon = 0.0
     lateinit var items: ItemizedIconOverlay<OverlayItem>
 
+    // lists used to add restaurants to database
+    var restaurantNameList = mutableListOf<String?>()
+    var restaurantAddressList = mutableListOf<String?>()
+    var restaurantCuisineList = mutableListOf<String?>()
+    var restaurantRatingList = mutableListOf<Int?>()
+    var restaurantLatList = mutableListOf<Double>()
+    var restaurantLonList = mutableListOf<Double>()
+    var addedToDatabse = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
+        addedToDatabse = false
+
 
         val map1 = findViewById<MapView>(R.id.map1)
-        map1.controller.setZoom(16.0)
+        map1.controller.setZoom(17.0)
         map1.controller.setCenter(GeoPoint(51.05, -0.72))
 
         val markerGestureListener = object:ItemizedIconOverlay.OnItemGestureListener<OverlayItem>
@@ -67,6 +81,14 @@ class MainActivity : AppCompatActivity(), LocationListener {
         requestLocation()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if(addedToDatabse == false){
+            addToDatabase()
+        }
+
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu, menu)
         return true
@@ -84,6 +106,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 startActivity(intent)
                 return true
             }
+            R.id.AddToDatabse -> {
+                addToDatabase()
+                return true
+            }
         }
         return false
     }
@@ -95,9 +121,19 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     val name = this.getStringExtra("com.example.name")
                     val address = this.getStringExtra("com.example.address")
                     val cuisine = this.getStringExtra("com.example.cuisine")
-                    val rating = this.getDoubleExtra("com.example.rating", 0.0)
+                    val rating = this.getIntExtra("com.example.rating", 1)
 
-                    newRestaurant = OverlayItem("Current Location", name, GeoPoint(lat, lon))
+                    val string = "Name: $name\nAddress: $address\nCuisine: $cuisine \nStar Rating: $rating"
+
+                    restaurantNameList.add(name)
+                    restaurantAddressList.add(address)
+                    restaurantCuisineList.add(cuisine)
+                    restaurantRatingList.add(rating)
+                    restaurantLatList.add(lat)
+                    restaurantLonList.add(lon)
+
+
+                    newRestaurant = OverlayItem("$name", string, GeoPoint(lat, lon))
                     items.addItem(newRestaurant)
                 }
             }
@@ -108,14 +144,8 @@ class MainActivity : AppCompatActivity(), LocationListener {
     fun requestLocation() {
 
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) { // for you to complete!!!
-            // note the use of 'as' to perform type casting in Kotlin
-            // getSystemService() returns a superclass type of LocationManager,
-            // so we need to cast it to LocationManager.
             val mgr=getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-
-            // Distance (third argument) is float.
-            // In Kotlin we must explicitly use "f" to specify it's a float
             mgr.requestLocationUpdates(LocationManager.GPS_PROVIDER,10000,0f,this)
 
         } else {
@@ -148,16 +178,11 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
 
     override fun onLocationChanged(newLoc: Location) {
-        //Toast.makeText (this, "Location=${newLoc.latitude},${newLoc.longitude}", Toast.LENGTH_LONG).show()
         val map1 = findViewById<MapView>(R.id.map1)
-        map1.controller.setZoom(16.0)
+        map1.controller.setZoom(17.0)
         map1.controller.setCenter(GeoPoint(newLoc.latitude, newLoc.longitude))
         lat = newLoc.latitude
         lon = newLoc.longitude
-
-        /*items.removeItem(currentLocation)
-        currentLocation = OverlayItem("Current Location", "Your Current Location", GeoPoint(newLoc.latitude, newLoc.longitude))
-        items.addItem(currentLocation)*/
     }
 
     override fun onProviderDisabled(provider: String) {
@@ -168,9 +193,37 @@ class MainActivity : AppCompatActivity(), LocationListener {
         Toast.makeText (this, "Provider enabled", Toast.LENGTH_LONG).show()
     }
 
-    // Deprecated at API level 29, but must still be included, otherwise your
-    // app will crash on lower-API devices as their API will try and call it
     override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {
 
+    }
+
+    fun showDialog(message: String) {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setPositiveButton("OK", null)
+            .setMessage(message)
+            .show()
+    }
+
+    fun addToDatabase(){
+        lifecycleScope.launch {
+            val db = RestaurantDatabase.getDatabase(application)
+            for(i in 0 until restaurantNameList.size){
+                var name = restaurantNameList[i]
+                var address = restaurantAddressList[i]
+                var cuisine = restaurantCuisineList[i]
+                var rating = restaurantRatingList[i]
+                var latitude = restaurantLatList[i]
+                var longitude = restaurantLonList[i]
+
+                var restaurant = Restaurants(0,name, address, cuisine, rating, latitude, longitude)
+                var id = 0L
+
+                withContext(Dispatchers.IO) {
+                    id = db.RestaurantDao().insert(restaurant)
+                }
+            }
+            addedToDatabse = true
+            showDialog("Restaurants added to the database.")
+        }
     }
 }

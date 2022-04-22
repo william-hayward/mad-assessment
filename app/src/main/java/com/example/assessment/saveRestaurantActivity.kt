@@ -33,20 +33,20 @@ class saveRestaurantActivity : AppCompatActivity(), View.OnClickListener {
         var Name = ""
         var Address = ""
         var Cuisine = ""
-        var Rating = 0.0
+        var Rating = 0
 
         when (v?.id) {
             R.id.btn1 -> {
                 Name = name.text.toString()
                 Address = address.text.toString()
                 Cuisine = cuisine.text.toString()
-                Rating = rating.text.toString().toDouble()
+                Rating = rating.text.toString().toInt()
                 sendBackValues(Name, Address, Cuisine, Rating)
             }
         }
     }
 
-    fun sendBackValues(name: String, address: String, cuisine: String, rating: Double ) {
+    fun sendBackValues(name: String, address: String, cuisine: String, rating: Int ) {
         val intent = Intent()
         val bundle = bundleOf("com.example.name" to name, "com.example.address" to address,
             "com.example.cuisine" to cuisine, "com.example.rating" to rating)

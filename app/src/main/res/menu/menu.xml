@@ -2,4 +2,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/addRestaurant" android:title="@string/addRestaurant"/>
     <item android:id="@+id/mapActivity" android:title="@string/menuActivity"/>
+    <item android:id="@+id/AddToDatabse" android:title="@string/AddToDatabse"/>
 </menu>
