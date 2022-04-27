@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".saveRestaurantActivity"/>
+        <activity android:name=".PreferenceActivity"/>
     </application>
 
 </manifest>

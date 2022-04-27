@@ -42,13 +42,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
     var restaurantRatingList = mutableListOf<Int?>()
     var restaurantLatList = mutableListOf<Double>()
     var restaurantLonList = mutableListOf<Double>()
-    var addedToDatabse = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         Configuration.getInstance().load(this, PreferenceManager.getDefaultSharedPreferences(this));
-        addedToDatabse = false
 
 
         val map1 = findViewById<MapView>(R.id.map1)
@@ -81,12 +80,18 @@ class MainActivity : AppCompatActivity(), LocationListener {
         requestLocation()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if(addedToDatabse == false){
-            addToDatabase()
-        }
+    override fun onStop() {
+        super.onStop()
+        addToDatabase()
+    }
 
+    override fun onResume() {
+        super.onResume()
+        val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        val uploadStatus = prefs.getBoolean("web", false) ?: false
+        if (uploadStatus == true){
+            showDialog("preference chosen")
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -108,6 +113,11 @@ class MainActivity : AppCompatActivity(), LocationListener {
             }
             R.id.AddToDatabse -> {
                 addToDatabase()
+                return true
+            }
+            R.id.preferences -> {
+                val intent = Intent(this, PreferenceActivity::class.java)
+                startActivity(intent)
                 return true
             }
         }
@@ -222,7 +232,6 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     id = db.RestaurantDao().insert(restaurant)
                 }
             }
-            addedToDatabse = true
             showDialog("Restaurants added to the database.")
         }
     }
