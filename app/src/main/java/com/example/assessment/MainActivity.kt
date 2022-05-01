@@ -120,8 +120,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 startActivity(intent)
                 return true
             }
+            R.id.load -> {
+                loadFromDatabase()
+                return true
+            }
         }
-        return false
+        return true
     }
 
     val addRestaurantLauncher =
@@ -234,5 +238,26 @@ class MainActivity : AppCompatActivity(), LocationListener {
             }
             showDialog("Restaurants added to the database.")
         }
+    }
+
+    fun loadFromDatabase(){
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                val db = RestaurantDatabase.getDatabase(application)
+                var allRestaurants = db.RestaurantDao().getAllRestaurants()
+                for(i in 0 until allRestaurants.size){
+                    var restaurant = allRestaurants[i]
+                    restaurant?.apply{
+                        var name = restaurant.name
+                        var lat = restaurant.lat
+                        var lon = restaurant.lon
+                        var string = "Name: ${restaurant.name}\nAddress: ${restaurant.address}\nCuisine: ${restaurant.cuisine}\nStar Rating: ${restaurant.rating}"
+                        var newRestaurant = OverlayItem("restaurant", string, GeoPoint(lat, lon))
+                        items.addItem(newRestaurant)
+                    }
+                }
+            }
+        }
+        showDialog("Restaurants loaded from the database.")
     }
 }
