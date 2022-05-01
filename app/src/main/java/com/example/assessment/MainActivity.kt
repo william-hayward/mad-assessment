@@ -19,6 +19,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.json.responseJson
+import com.github.kittinunf.result.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,6 +125,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
             }
             R.id.load -> {
                 loadFromDatabase()
+                return true
+            }
+            R.id.web -> {
+                loadFromWeb()
                 return true
             }
         }
@@ -248,7 +255,6 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 for(i in 0 until allRestaurants.size){
                     var restaurant = allRestaurants[i]
                     restaurant?.apply{
-                        var name = restaurant.name
                         var lat = restaurant.lat
                         var lon = restaurant.lon
                         var string = "Name: ${restaurant.name}\nAddress: ${restaurant.address}\nCuisine: ${restaurant.cuisine}\nStar Rating: ${restaurant.rating}"
@@ -259,5 +265,26 @@ class MainActivity : AppCompatActivity(), LocationListener {
             }
         }
         showDialog("Restaurants loaded from the database.")
+    }
+
+    fun loadFromWeb(){
+        val url = "http://10.0.2.2:3000/restaurants/all"
+        url.httpGet().responseJson { request, response, result ->
+            when (result) {
+                is Result.Success -> {
+                    val jsonArray = result.get().array()
+                    for (i in 0 until jsonArray.length()) {
+                        val curObj = jsonArray.getJSONObject(i)
+                        var string = "Name: ${curObj.getString("name")}\nAddress: ${curObj.getString("address")}\nCuisine: ${curObj.getString("cuisine")}\nStar Rating: ${curObj.getString("starRating")}"
+                        var newRestaurant = OverlayItem("restaurant", string, GeoPoint(curObj.getString("lat").toDouble(), curObj.getString("lon").toDouble()))
+                        items.addItem(newRestaurant)
+                    }
+                }
+
+                is Result.Failure -> {
+                    showDialog("Error! ${result.error.message}")
+                }
+            }
+        }
     }
 }

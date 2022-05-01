@@ -5,4 +5,5 @@
     <item android:id="@+id/AddToDatabse" android:title="@string/AddToDatabse"/>
     <item android:id="@+id/preferences" android:title="@string/preferences"/>
     <item android:id="@+id/load" android:title="@string/load"/>
+    <item android:id="@+id/web" android:title="@string/web"/>
 </menu>

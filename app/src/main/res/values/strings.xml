@@ -11,4 +11,5 @@
     <string name="AddToDatabse">Add Restaurants To Databse</string>
     <string name="preferences">Preferences</string>
     <string name="load">Load From Database</string>
+    <string name="web">Load Restaurants From Web</string>
 </resources>
