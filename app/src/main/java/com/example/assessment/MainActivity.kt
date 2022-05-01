@@ -13,20 +13,19 @@ import android.content.pm.PackageManager
 import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.fuel.json.responseJson
+import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
+import com.github.kittinunf.fuel.json.responseJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.ItemizedIconOverlay
@@ -156,6 +155,12 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
                     newRestaurant = OverlayItem("$name", string, GeoPoint(lat, lon))
                     items.addItem(newRestaurant)
+
+                    val prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+                    val uploadStatus = prefs.getBoolean("web", false) ?: false
+                    if (uploadStatus == true){
+                        addToWeb(name, cuisine, address, rating, lon, lat)
+                    }
                 }
             }
         }
@@ -283,6 +288,28 @@ class MainActivity : AppCompatActivity(), LocationListener {
 
                 is Result.Failure -> {
                     showDialog("Error! ${result.error.message}")
+                }
+            }
+        }
+    }
+
+    fun addToWeb(name: String?, cuisine: String?, address: String?, rating: Int, lon: Double, lat: Double){
+        val url = "http://10.0.2.2:3000/restaurant/create"
+        val postData = listOf(
+            "name" to name,
+            "cuisine" to cuisine,
+            "address" to address,
+            "starRating" to rating,
+            "lon" to lon,
+            "lat" to lat)
+        url.httpPost(postData).response{ request, response, result ->
+            when (result) {
+                is Result.Success -> {
+                    Toast.makeText(this@MainActivity, result.get().decodeToString(), Toast.LENGTH_LONG).show()
+                }
+
+                is Result.Failure -> {
+                    Toast.makeText(this@MainActivity, result.error.message, Toast.LENGTH_LONG).show()
                 }
             }
         }
