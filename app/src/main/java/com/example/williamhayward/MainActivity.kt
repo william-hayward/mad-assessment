@@ -1,4 +1,4 @@
-package com.example.assessment
+package com.example.williamhayward
 
 import android.Manifest
 import android.app.AlertDialog

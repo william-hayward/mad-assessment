@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Assessment</string>
+    <string name="app_name">William-Hayward</string>
     <string name="addRestaurant">Add New Restaurant</string>
     <string name="create">Add A Restaurant:</string>
     <string name="menuActivity">Go Back To Map</string>

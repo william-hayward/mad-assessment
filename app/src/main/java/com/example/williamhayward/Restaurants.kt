@@ -1,4 +1,4 @@
-package com.example.assessment
+package com.example.williamhayward
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
