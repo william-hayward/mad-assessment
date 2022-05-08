@@ -17,11 +17,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.fuel.json.responseJson
+import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -75,6 +77,40 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 return true
             }
         }
+
+        var nv = findViewById<NavigationView>(R.id.nv)
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawerLayout)
+
+        nv.setNavigationItemSelectedListener {
+            val returnValue = true
+            when(it.itemId){
+                R.id.addRestaurant ->{
+                    val intent = Intent(this,saveRestaurantActivity::class.java)
+                    addRestaurantLauncher.launch(intent)
+                }
+                R.id.mapActivity -> {
+                    val intent = Intent(this,MainActivity::class.java)
+                    startActivity(intent)
+                }
+                R.id.AddToDatabse -> {
+                    addToDatabase()
+                }
+                R.id.preferences -> {
+                    val intent = Intent(this, PreferenceActivity::class.java)
+                    startActivity(intent)
+                }
+                R.id.load -> {
+                    loadFromDatabase()
+                }
+                R.id.web -> {
+                    loadFromWeb()
+                }
+
+            }
+            returnValue
+        }
+
+
 
         items = ItemizedIconOverlay(this, arrayListOf<OverlayItem>(), markerGestureListener)
         map1.overlays.add(items)
